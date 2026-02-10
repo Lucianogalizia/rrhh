@@ -1,12 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from store.memory import get_team_kpis
+from core.auth_dep import get_current_user
 
 router = APIRouter()
 
 @router.get("/team/{team}")
-def team_dashboard(team: str):
-    data = get_team_kpis(team)
+def team_dashboard(team: str, user=Depends(get_current_user)):
+    if user.get("role") != "rrhh":
+        raise HTTPException(status_code=403, detail="No autorizado")
 
+    data = get_team_kpis(team)
     if not data:
         return {"team": team, "kpis": {}}
 
