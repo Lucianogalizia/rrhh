@@ -6,6 +6,7 @@ import { MoodScale } from "@/components/MoodScale";
 import { EnergySlider } from "@/components/EnergySlider";
 import { MultiSelectChips } from "@/components/MultiSelectChips";
 import { apiPost } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 type Mood = "muy_bien" | "bien" | "regular" | "mal";
 type Sleep = "si" | "mas_o_menos" | "no";
@@ -21,21 +22,44 @@ export default function CheckinPage() {
   const [activated, setActivated] = useState<{ id: string; text: string }[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  async function submit() {
-    const resp = await apiPost<{ activated_questions: any[]; feedback: string }>(
-      "/api/checkin",
-      {
-        mood,
-        sleep,
-        personal_issues: personal,
-        work_issue: workIssue,
-        work_issue_note: workIssue ? workNote : null,
-        energy
-      }
-    );
+  // ✅ NUEVO: estados para que "no quede colgado"
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    setActivated(resp.activated_questions || []);
-    setFeedback(resp.feedback || "Gracias.");
+  async function submit() {
+    setLoading(true);
+    setError(null);
+
+    // ✅ Si no hay token, es porque no logueaste o se perdió la sesión
+    const token = getToken();
+    if (!token) {
+      setError("Tu sesión no está activa. Volvé a /login y entrá de nuevo.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // ✅ Endpoint correcto (con /api y con / final)
+      const resp = await apiPost<{ activated_questions: any[]; feedback: string }>(
+        "/api/checkin/",
+        {
+          mood,
+          sleep,
+          personal_issues: personal,
+          work_issue: workIssue,
+          work_issue_note: workIssue ? workNote : null,
+          energy
+        }
+      );
+
+      setActivated(resp.activated_questions || []);
+      setFeedback(resp.feedback || "Gracias.");
+    } catch (e: any) {
+      console.error("Check-in error:", e?.message || e);
+      setError("No pudimos enviar el check-in. Probá cerrar sesión y entrar de nuevo.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -110,12 +134,21 @@ export default function CheckinPage() {
             <EnergySlider value={energy} onChange={setEnergy} />
           </div>
 
-          <button className="w-full rounded-xl bg-neutral-900 p-3 text-white" onClick={submit}>
-            Enviar check-in
+          {/* ✅ Botón con loading */}
+          <button
+            className="w-full rounded-xl bg-neutral-900 p-3 text-white disabled:opacity-60"
+            onClick={submit}
+            disabled={loading}
+          >
+            {loading ? "Enviando..." : "Enviar check-in"}
           </button>
+
+          {/* ✅ Error visible */}
+          {error ? <div className="text-sm text-red-600">{error}</div> : null}
         </div>
       </Card>
 
+      {/* ✅ Respuesta visible */}
       {feedback ? (
         <Card>
           <div className="font-medium">Listo ✨</div>
