@@ -1,6 +1,6 @@
 import { getToken } from "./auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = ""; // mismo dominio
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const token = typeof window !== "undefined" ? getToken() : null;
