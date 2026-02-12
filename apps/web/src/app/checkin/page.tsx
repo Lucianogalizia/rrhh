@@ -22,41 +22,41 @@ export default function CheckinPage() {
   const [activated, setActivated] = useState<{ id: string; text: string }[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  // ✅ NUEVO: estados para que "no quede colgado"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
+    console.log("CLICK DETECTADO"); // 👈 esto debería verse en la consola
     setLoading(true);
     setError(null);
-
-    // ✅ Si no hay token, es porque no logueaste o se perdió la sesión
-    const token = getToken();
-    if (!token) {
-      setError("Tu sesión no está activa. Volvé a /login y entrá de nuevo.");
-      setLoading(false);
-      return;
-    }
+    setFeedback(null);
+    setActivated([]);
 
     try {
-      // ✅ Endpoint correcto (con /api y con / final)
-      const resp = await apiPost<{ activated_questions: any[]; feedback: string }>(
-        "/api/checkin/",
-        {
-          mood,
-          sleep,
-          personal_issues: personal,
-          work_issue: workIssue,
-          work_issue_note: workIssue ? workNote : null,
-          energy
-        }
-      );
+      const token = getToken();
+
+      if (!token) {
+        setError("No hay sesión activa. Volvé a /login.");
+        return;
+      }
+
+      const resp = await apiPost<{
+        activated_questions: { id: string; text: string }[];
+        feedback: string;
+      }>("/api/checkin/", {
+        mood,
+        sleep,
+        personal_issues: personal,
+        work_issue: workIssue,
+        work_issue_note: workIssue ? workNote : null,
+        energy
+      });
 
       setActivated(resp.activated_questions || []);
       setFeedback(resp.feedback || "Gracias.");
-    } catch (e: any) {
-      console.error("Check-in error:", e?.message || e);
-      setError("No pudimos enviar el check-in. Probá cerrar sesión y entrar de nuevo.");
+    } catch (err: any) {
+      console.error("ERROR:", err);
+      setError("Error enviando el check-in.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,6 @@ export default function CheckinPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Check-in diario</h1>
-      <p className="text-neutral-600">Toma 2–3 minutos.</p>
 
       <Card>
         <div className="space-y-4">
@@ -89,53 +88,46 @@ export default function CheckinPage() {
 
           <div>
             <div className="mb-2 font-medium">
-              ¿Estás atravesando alguna situación personal que pueda afectar tu día laboral?
+              ¿Situación personal que pueda afectar tu día?
             </div>
             <MultiSelectChips values={personal} onChange={setPersonal} />
           </div>
 
           <div>
-            <div className="mb-2 font-medium">¿Ocurrió algo en el trabajo que hoy te impacte?</div>
+            <div className="mb-2 font-medium">¿Algo laboral te impacta hoy?</div>
             <div className="flex gap-2">
               <button
                 type="button"
-                className={[
-                  "flex-1 rounded-xl border p-3",
-                  workIssue ? "bg-neutral-900 text-white border-neutral-900" : "border-neutral-200"
-                ].join(" ")}
+                className={`flex-1 rounded-xl border p-3 ${
+                  workIssue
+                    ? "bg-neutral-900 text-white border-neutral-900"
+                    : "border-neutral-200"
+                }`}
                 onClick={() => setWorkIssue(true)}
               >
                 Sí
               </button>
               <button
                 type="button"
-                className={[
-                  "flex-1 rounded-xl border p-3",
-                  !workIssue ? "bg-neutral-900 text-white border-neutral-900" : "border-neutral-200"
-                ].join(" ")}
+                className={`flex-1 rounded-xl border p-3 ${
+                  !workIssue
+                    ? "bg-neutral-900 text-white border-neutral-900"
+                    : "border-neutral-200"
+                }`}
                 onClick={() => setWorkIssue(false)}
               >
                 No
               </button>
             </div>
-
-            {workIssue ? (
-              <textarea
-                className="mt-2 w-full rounded-xl border border-neutral-200 p-3"
-                placeholder="Opcional: breve comentario"
-                value={workNote}
-                onChange={(e) => setWorkNote(e.target.value)}
-              />
-            ) : null}
           </div>
 
           <div>
-            <div className="mb-2 font-medium">Nivel de energía para hoy</div>
+            <div className="mb-2 font-medium">Nivel de energía</div>
             <EnergySlider value={energy} onChange={setEnergy} />
           </div>
 
-          {/* ✅ Botón con loading */}
           <button
+            type="button"
             className="w-full rounded-xl bg-neutral-900 p-3 text-white disabled:opacity-60"
             onClick={submit}
             disabled={loading}
@@ -143,31 +135,27 @@ export default function CheckinPage() {
             {loading ? "Enviando..." : "Enviar check-in"}
           </button>
 
-          {/* ✅ Error visible */}
-          {error ? <div className="text-sm text-red-600">{error}</div> : null}
+          {error && <div className="text-red-600 text-sm">{error}</div>}
         </div>
       </Card>
 
-      {/* ✅ Respuesta visible */}
-      {feedback ? (
+      {feedback && (
         <Card>
-          <div className="font-medium">Listo ✨</div>
-          <div className="text-neutral-600 mt-1">{feedback}</div>
-
-          {activated.length ? (
-            <div className="mt-3">
-              <div className="font-medium">Preguntas breves (solo si aplica)</div>
-              <ul className="mt-2 list-disc pl-5 text-neutral-700">
-                {activated.map((q) => (
-                  <li key={q.id}>{q.text}</li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="mt-3 text-neutral-600">Por hoy, nada más.</div>
-          )}
+          <div className="font-medium">Respuesta:</div>
+          <div className="mt-2 text-neutral-700">{feedback}</div>
         </Card>
-      ) : null}
+      )}
+
+      {activated.length > 0 && (
+        <Card>
+          <div className="font-medium">Preguntas activadas:</div>
+          <ul className="mt-2 list-disc pl-5">
+            {activated.map((q) => (
+              <li key={q.id}>{q.text}</li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 }
