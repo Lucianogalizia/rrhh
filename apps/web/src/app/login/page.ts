@@ -16,7 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      const resp = await apiPost<{ access_token: string }>("/auth/login", { email, password });
+      const resp = await apiPost<{ access_token: string }>("/api/auth/login", { email, password });
       setToken(resp.access_token);
       r.push("/checkin");
     } catch (err: any) {
