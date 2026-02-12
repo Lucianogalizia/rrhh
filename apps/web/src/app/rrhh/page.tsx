@@ -12,7 +12,7 @@ export default function RRHHPage() {
   async function load() {
     setErr(null);
     try {
-      const resp = await apiGet(`/rrhh/team/${encodeURIComponent(team)}`);
+      const resp = await apiGet(`/api/rrhh/team/${encodeURIComponent(team)}`);
       setData(resp);
     } catch {
       setErr("No autorizado o sin datos.");
