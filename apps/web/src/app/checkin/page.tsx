@@ -23,7 +23,7 @@ export default function CheckinPage() {
 
   async function submit() {
     const resp = await apiPost<{ activated_questions: any[]; feedback: string }>(
-      "/checkin/",
+      "/api/checkin",
       {
         mood,
         sleep,
