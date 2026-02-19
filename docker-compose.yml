@@ -1,4 +1,14 @@
 services:
+  app:
+    build:
+      # FIX: contexto apuntaba a apps/api (incompleto). Ahora apunta a la raíz donde está main.py y todo el backend real.
+      context: .
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080services:
   api:
     build:
       context: ./apps/api
