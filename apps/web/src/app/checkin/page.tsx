@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/Card";
 import { MoodScale } from "@/components/MoodScale";
 import { EnergySlider } from "@/components/EnergySlider";
@@ -12,28 +13,22 @@ type Mood = "muy_bien" | "bien" | "regular" | "mal";
 type Sleep = "si" | "mas_o_menos" | "no";
 
 export default function CheckinPage() {
+  const router = useRouter();
   const [mood, setMood] = useState<Mood>("bien");
   const [sleep, setSleep] = useState<Sleep>("si");
   const [personal, setPersonal] = useState<string[]>(["ninguna"]);
   const [workIssue, setWorkIssue] = useState(false);
   const [workNote, setWorkNote] = useState("");
   const [energy, setEnergy] = useState(7);
-
-  const [activated, setActivated] = useState<{ id: string; text: string }[]>([]);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    // FIX: console.log de debug eliminado
     setLoading(true);
     setError(null);
-    setFeedback(null);
-    setActivated([]);
 
     try {
       const token = getToken();
-
       if (!token) {
         setError("No hay sesión activa. Volvé a /login.");
         return;
@@ -42,6 +37,7 @@ export default function CheckinPage() {
       const resp = await apiPost<{
         activated_questions: { id: string; text: string }[];
         feedback: string;
+        checkin: object;
       }>("/api/checkin/", {
         mood,
         sleep,
@@ -51,8 +47,9 @@ export default function CheckinPage() {
         energy
       });
 
-      setActivated(resp.activated_questions || []);
-      setFeedback(resp.feedback || "Gracias.");
+      sessionStorage.setItem("checkin_context", JSON.stringify(resp.checkin));
+      router.push("/chat");
+
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error desconocido";
       console.error("ERROR checkin:", message);
@@ -120,7 +117,6 @@ export default function CheckinPage() {
               </button>
             </div>
 
-            {/* FIX: textarea de nota que faltaba */}
             {workIssue && (
               <textarea
                 className="mt-2 w-full rounded-xl border border-neutral-200 p-3 text-sm"
@@ -149,24 +145,6 @@ export default function CheckinPage() {
           {error && <div className="text-red-600 text-sm">{error}</div>}
         </div>
       </Card>
-
-      {feedback && (
-        <Card>
-          <div className="font-medium">Respuesta:</div>
-          <div className="mt-2 text-neutral-700">{feedback}</div>
-        </Card>
-      )}
-
-      {activated.length > 0 && (
-        <Card>
-          <div className="font-medium">Preguntas activadas:</div>
-          <ul className="mt-2 list-disc pl-5">
-            {activated.map((q) => (
-              <li key={q.id}>{q.text}</li>
-            ))}
-          </ul>
-        </Card>
-      )}
     </div>
   );
 }
