@@ -1,9 +1,10 @@
 import os
+import warnings
 
 class Settings:
     APP_NAME = "APP RRHH"
 
-    JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-dev")
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "")
     JWT_ALGORITHM = "HS256"
 
     TEST_USER = {
@@ -14,6 +15,16 @@ class Settings:
         "team": os.getenv("TEST_USER_TEAM", "Operaciones"),
         "role": "user"
     }
+
+    def __init__(self):
+        # FIX: JWT_SECRET obligatorio en producción. Si no está seteado, advertir fuerte.
+        if not self.JWT_SECRET:
+            warnings.warn(
+                "⚠️  JWT_SECRET no está configurado como variable de entorno. "
+                "Usando valor de fallback inseguro. NO usar en producción.",
+                stacklevel=2
+            )
+            self.JWT_SECRET = "super-secret-dev-INSEGURO"
 
 
 settings = Settings()
