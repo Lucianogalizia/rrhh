@@ -21,12 +21,11 @@ export default function CheckinPage() {
 
   const [activated, setActivated] = useState<{ id: string; text: string }[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    console.log("CLICK DETECTADO"); // 👈 esto debería verse en la consola
+    // FIX: console.log de debug eliminado
     setLoading(true);
     setError(null);
     setFeedback(null);
@@ -54,8 +53,9 @@ export default function CheckinPage() {
 
       setActivated(resp.activated_questions || []);
       setFeedback(resp.feedback || "Gracias.");
-    } catch (err: any) {
-      console.error("ERROR:", err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      console.error("ERROR checkin:", message);
       setError("Error enviando el check-in.");
     } finally {
       setLoading(false);
@@ -119,6 +119,17 @@ export default function CheckinPage() {
                 No
               </button>
             </div>
+
+            {/* FIX: textarea de nota que faltaba */}
+            {workIssue && (
+              <textarea
+                className="mt-2 w-full rounded-xl border border-neutral-200 p-3 text-sm"
+                placeholder="Contanos brevemente (opcional)..."
+                value={workNote}
+                onChange={(e) => setWorkNote(e.target.value)}
+                rows={3}
+              />
+            )}
           </div>
 
           <div>
