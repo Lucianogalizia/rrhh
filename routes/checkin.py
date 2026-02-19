@@ -13,9 +13,11 @@ def submit_checkin(checkin: CheckIn, user=Depends(get_current_user)):
     kpis = calculate_kpis(checkin)
 
     team = user.get("team", "UNKNOWN")
+    email = user.get("email", "UNKNOWN")
 
     save_checkin(
         team=team,
+        email=email,
         checkin=checkin.model_dump(),
         kpis=kpis.model_dump()
     )
@@ -23,5 +25,6 @@ def submit_checkin(checkin: CheckIn, user=Depends(get_current_user)):
     return {
         "activated_questions": questions,
         "feedback": "Gracias por compartir cómo estás hoy.",
-        "team": team
+        "team": team,
+        "checkin": checkin.model_dump()  # devolvemos el checkin para pasarlo al chat
     }
