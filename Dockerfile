@@ -23,7 +23,7 @@ COPY domain /app/domain
 COPY routes /app/routes
 COPY store /app/store
 
-RUN pip install --no-cache-dir fastapi uvicorn[standard] python-jose[cryptography] pydantic
+RUN pip install --no-cache-dir fastapi uvicorn[standard] python-jose[cryptography] pydantic openai
 
 # Copiar frontend exportado
 COPY --from=webbuild /web/out /app/static
