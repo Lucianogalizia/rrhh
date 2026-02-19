@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routes import auth, checkin, rrhh
+from routes import auth, checkin, rrhh, chat
 
 # Orígenes permitidos: leídos desde variable de entorno o restringidos en producción
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else ["*"]
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(checkin.router, prefix="/api/checkin", tags=["Check-in"])
 app.include_router(rrhh.router, prefix="/api/rrhh", tags=["RRHH"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat IA"])
 
 @app.get("/api/health")
 def healthcheck():
