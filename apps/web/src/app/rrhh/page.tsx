@@ -80,17 +80,43 @@ export default function RRHHPage() {
 
       {data?.kpis && Object.keys(data.kpis).length > 0 ? (
         <Card>
-          <div className="font-medium mb-2">KPIs — Equipo: {data.team}</div>
+          <div className="font-medium mb-2">
+            KPIs del Check-in — Equipo: {data.team}{" "}
+            <span className="text-xs text-neutral-400 font-normal">({data.sample_size} registros)</span>
+          </div>
           <div className="space-y-2">
             {Object.entries(data.kpis as Record<string, number>).map(([key, val]) => (
               <div key={key} className="flex justify-between text-sm">
                 <span className="text-neutral-600 capitalize">{key.replace(/_/g, " ")}</span>
-                <span className="font-medium">{(val * 100).toFixed(0)}%</span>
+                <span className={`font-medium ${val > 0.7 ? "text-red-600" : val > 0.4 ? "text-yellow-600" : "text-green-600"}`}>
+                  {(val * 100).toFixed(0)}%
+                </span>
               </div>
             ))}
           </div>
         </Card>
-      ) : data ? (
+      ) : null}
+
+      {data?.chat_kpis && Object.keys(data.chat_kpis).length > 0 ? (
+        <Card>
+          <div className="font-medium mb-1">KPIs del Chat IA — Equipo: {data.team}</div>
+          <p className="text-xs text-neutral-400 mb-3">
+            Generados por la IA tras la conversación de seguimiento (más precisos)
+          </p>
+          <div className="space-y-2">
+            {Object.entries(data.chat_kpis as Record<string, number>).map(([key, val]) => (
+              <div key={key} className="flex justify-between text-sm">
+                <span className="text-neutral-600 capitalize">{key.replace(/_/g, " ")}</span>
+                <span className={`font-medium ${val > 0.7 ? "text-red-600" : val > 0.4 ? "text-yellow-600" : "text-green-600"}`}>
+                  {(val * 100).toFixed(0)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {data && Object.keys(data.kpis ?? {}).length === 0 && Object.keys(data.chat_kpis ?? {}).length === 0 ? (
         <Card>
           <p className="text-sm text-neutral-500">Sin datos registrados para este equipo todavía.</p>
         </Card>
